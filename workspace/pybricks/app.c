@@ -300,12 +300,71 @@ const CliMenu climenu_pb = {
 };
 
 
+void poll_task(intptr_t unused) {
+
+    // how to get the time
+    SYSTIM tim;
+    get_tim(&tim);
+
+    static bool on = false;
+
+    if (ploc_mtx(MTX1) == E_OK) {
+        // we acquired lock, do things
+
+        if (on) {
+            ev3_led_set_color(LED_OFF);
+            on = false;
+        }
+        else {
+            ev3_led_set_color(LED_RED);
+            on = true;	
+        }
+        // fictious wait
+        tslp_tsk(1000);
+
+        // give
+        assert(unl_mtx(MTX1) == E_OK);
+    }
+    else {
+        // Couldn't get lock, better luck next time, shouldn't wait for it in the ISR
+    }
+
+}
+
+void task_activator(intptr_t tskid) {
+    ER ercd = act_tsk(tskid);
+    assert(ercd == E_OK);
+}
+
+void pbio_do_a_thing() {
+    // but not until we get a lock (i.e. wait for poll task to complete)
+    assert(loc_mtx(MTX1) == E_OK);
+
+    ev3_led_set_color(LED_GREEN);
+
+    // fictious wait
+    tslp_tsk(3000);
+
+    ev3_led_set_color(LED_ORANGE);
+    // give
+    assert(unl_mtx(MTX1) == E_OK);
+}
+
+
+
 void main_task(intptr_t unused) {
 
 	/**
 	 *
 	 */
     fio = ev3_serial_open_file(EV3_SERIAL_DEFAULT);
+
+
+    while (true) {
+        while(!ev3_button_is_pressed(ENTER_BUTTON));
+        while(ev3_button_is_pressed(ENTER_BUTTON));
+        pbio_do_a_thing();
+    }
 
     ev3_font_get_size(MENU_FONT, &default_menu_font_width, &default_menu_font_height);
 	while(1) {
