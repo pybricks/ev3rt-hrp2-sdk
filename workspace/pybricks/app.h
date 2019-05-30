@@ -124,6 +124,7 @@ extern int32_t default_menu_font_height;
  */
 
 extern void	main_task(intptr_t exinf);
+extern void	init_task(intptr_t exinf);
 extern void poll_task(intptr_t exinf);
 
 extern void task_activator(intptr_t tskid);

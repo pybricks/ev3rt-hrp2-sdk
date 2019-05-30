@@ -352,19 +352,28 @@ void pbio_do_a_thing() {
 
 
 
-void main_task(intptr_t unused) {
+void init_task(intptr_t unused) {
+	while (!platform_is_ready());
+	ev3_led_set_color(LED_ORANGE);
+	ev3_button_set_on_clicked(BACK_BUTTON, stop_user_script, BACK_BUTTON);
+	ER ercd = act_tsk(MAIN_TASK);
+    assert(ercd == E_OK);
+}
 
+
+void main_task(intptr_t unused) {
+	while (!platform_is_ready());
 	/**
 	 *
 	 */
     fio = ev3_serial_open_file(EV3_SERIAL_DEFAULT);
 
 
-    while (true) {
-        while(!ev3_button_is_pressed(ENTER_BUTTON));
-        while(ev3_button_is_pressed(ENTER_BUTTON));
-        pbio_do_a_thing();
-    }
+    // while (true) {
+    //     while(!ev3_button_is_pressed(ENTER_BUTTON));
+    //     while(ev3_button_is_pressed(ENTER_BUTTON));
+    //     pbio_do_a_thing();
+    // }
 
     ev3_font_get_size(MENU_FONT, &default_menu_font_width, &default_menu_font_height);
 	while(1) {
