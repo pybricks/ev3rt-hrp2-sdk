@@ -6,6 +6,7 @@
 
 #include "ev3api.h"
 #include "app.h"
+#include "platform.h"
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
@@ -254,7 +255,6 @@ void test_audio_files() {
 
 	static char filepath[256 * 2];
 	while(1) {
-//		fio_clear_screen();
 		show_cli_menu(&climenu, 0, 0, MENU_FONT);
 		const CliMenuEntry *cme = select_menu_entry(&climenu, 0, MENU_FONT_HEIGHT, MENU_FONT);
 		if(cme != NULL) {
@@ -302,32 +302,9 @@ const CliMenu climenu_pb = {
 
 void poll_task(intptr_t unused) {
 
-    // how to get the time
-    SYSTIM tim;
-    get_tim(&tim);
-
-    static bool on = false;
-
-    if (ploc_mtx(MTX1) == E_OK) {
-        // we acquired lock, do things
-
-        if (on) {
-            ev3_led_set_color(LED_OFF);
-            on = false;
-        }
-        else {
-            ev3_led_set_color(LED_RED);
-            on = true;	
-        }
-        // fictious wait
-        tslp_tsk(1000);
-
-        // give
-        assert(unl_mtx(MTX1) == E_OK);
-    }
-    else {
-        // Couldn't get lock, better luck next time, shouldn't wait for it in the ISR
-    }
+    assert(loc_mtx(MTX1) == E_OK);
+	// Do something
+	assert(unl_mtx(MTX1) == E_OK);
 
 }
 
@@ -337,16 +314,8 @@ void task_activator(intptr_t tskid) {
 }
 
 void pbio_do_a_thing() {
-    // but not until we get a lock (i.e. wait for poll task to complete)
     assert(loc_mtx(MTX1) == E_OK);
-
-    ev3_led_set_color(LED_GREEN);
-
-    // fictious wait
-    tslp_tsk(3000);
-
-    ev3_led_set_color(LED_ORANGE);
-    // give
+	// Do something
     assert(unl_mtx(MTX1) == E_OK);
 }
 
@@ -356,24 +325,13 @@ void init_task(intptr_t unused) {
 	while (!platform_is_ready());
 	ev3_led_set_color(LED_ORANGE);
 	ev3_button_set_on_clicked(BACK_BUTTON, stop_user_script, BACK_BUTTON);
-	ER ercd = act_tsk(MAIN_TASK);
-    assert(ercd == E_OK);
+    assert(act_tsk(MAIN_TASK) == E_OK);
+	assert(ev3_sta_cyc(CYC_POLL_TASK) == E_OK);
 }
 
 
 void main_task(intptr_t unused) {
 	while (!platform_is_ready());
-	/**
-	 *
-	 */
-    fio = ev3_serial_open_file(EV3_SERIAL_DEFAULT);
-
-
-    // while (true) {
-    //     while(!ev3_button_is_pressed(ENTER_BUTTON));
-    //     while(ev3_button_is_pressed(ENTER_BUTTON));
-    //     pbio_do_a_thing();
-    // }
 
     ev3_font_get_size(MENU_FONT, &default_menu_font_width, &default_menu_font_height);
 	while(1) {
