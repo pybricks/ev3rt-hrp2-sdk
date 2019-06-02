@@ -96,7 +96,7 @@ typedef struct {
 
 void show_cli_menu(const CliMenu *cm, int offset_x, int offset_y, lcdfont_t font);
 const CliMenuEntry* select_menu_entry(const CliMenu *cm, int offset_x, int offset_y, lcdfont_t font);
-void show_message_box(const char *title, const char *msg);
+void show_message_box(const char *title, const char *msg, bool_t wait);
 
 static inline
 void fio_clear_screen() {

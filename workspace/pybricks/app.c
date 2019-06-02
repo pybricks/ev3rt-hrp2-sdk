@@ -179,34 +179,7 @@ const CliMenuEntry* select_menu_entry(const CliMenu *cm, int offset_x, int offse
 	return &cm->entry_tab[current];
 }
 
-void show_running(const char *title, const char *msg) {
-	int offset_x = 0, offset_y = 0;
 
-	// Clear menu area
-	ev3_lcd_fill_rect(offset_x, offset_y, EV3_LCD_WIDTH, EV3_LCD_HEIGHT, EV3_LCD_WHITE);
-
-	// Draw title
-	if (EV3_LCD_WIDTH - offset_x > strlen(title) * MENU_FONT_WIDTH)
-		offset_x += (EV3_LCD_WIDTH - offset_x - strlen(title) * MENU_FONT_WIDTH) / 2;
-	ev3_lcd_draw_string(title, offset_x, offset_y);
-	ev3_lcd_draw_line(0, offset_y + MENU_FONT_HEIGHT - 1, EV3_LCD_WIDTH, offset_y + MENU_FONT_HEIGHT - 1);
-	offset_y += MENU_FONT_HEIGHT;
-
-	// Draw message
-	offset_x = MENU_FONT_WIDTH, offset_y += MENU_FONT_HEIGHT;
-	while (*msg != '\0') {
-		if (*msg == '\n' || offset_x + MENU_FONT_WIDTH > EV3_LCD_WIDTH) { // newline
-			offset_x = MENU_FONT_WIDTH;
-			offset_y += MENU_FONT_HEIGHT;
-		}
-		if (*msg != '\n') {
-			char buf[2] = { *msg, '\0' };
-			ev3_lcd_draw_string(buf, offset_x, offset_y);
-			offset_x += MENU_FONT_WIDTH;
-		}
-		msg++;
-	}
-}
 
 static
 void test_audio_files() {
@@ -232,7 +205,7 @@ void test_audio_files() {
 	ev3_sdcard_closedir(dirid);
 
 	if (filenos == 0) {
-		show_message_box("File Not Found", "No script (py) file is found in '" SD_RES_FOLDER "'.");
+		show_message_box("File Not Found", "No script (py) file is found in '" SD_RES_FOLDER "'.", true);
 		return;
 	}
 
@@ -267,7 +240,7 @@ void test_audio_files() {
 				strcpy(filepath, SD_RES_FOLDER);
 				strcat(filepath, "/");
 				strcat(filepath, fileinfos[cme->exinf].name);
-				show_running("Running script", filepath);
+				show_message_box("Running script", filepath, false);
 				mainpy(filepath);
 				// sprintf(msgbuf, "File '%s' is now being played.", filepath);
 				
@@ -346,7 +319,7 @@ void main_task(intptr_t unused) {
 
 }
 
-void show_message_box(const char *title, const char *msg) {
+void show_message_box(const char *title, const char *msg, bool_t wait) {
 	int offset_x = 0, offset_y = 0;
 
 	// Clear menu area
@@ -373,9 +346,10 @@ void show_message_box(const char *title, const char *msg) {
 		}
 		msg++;
 	}
-
+	if (wait) {
 	// Draw & wait 'OK' button
 	ev3_lcd_draw_string("--- OK ---", (EV3_LCD_WIDTH - strlen("--- OK ---") * MENU_FONT_WIDTH) / 2, EV3_LCD_HEIGHT - MENU_FONT_HEIGHT - 5);
 	while(!ev3_button_is_pressed(ENTER_BUTTON));
 	while(ev3_button_is_pressed(ENTER_BUTTON));
+	}
 }
